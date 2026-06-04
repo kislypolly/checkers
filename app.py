@@ -1,5 +1,5 @@
-import eventlet
-eventlet.monkey_patch()
+from gevent import monkey
+monkey.patch_all()
 
 import os
 from flask import Flask, render_template
@@ -8,7 +8,7 @@ from flask_socketio import SocketIO
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "checkers-secret-2026"
 app.config["TEMPLATES_AUTO_RELOAD"] = True
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent")
 
 
 @app.route("/")
