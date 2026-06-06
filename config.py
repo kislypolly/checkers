@@ -1,0 +1,6 @@
+class Config:
+    SECRET_KEY = "checkers-secret-2026"
+    TEMPLATES_AUTO_RELOAD = True
+    CORS_ALLOWED_ORIGINS = "*"
+    DEFAULT_PORT = 5001
+    MOVE_TIME_LIMIT_SECONDS = 30 

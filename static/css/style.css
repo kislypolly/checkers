@@ -264,6 +264,17 @@ html, body {
     background: rgba(44,110,158,0.06);
 }
 
+.move-timer {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.move-timer.warning {
+    color: #c0392b;
+}
+
 /* ── Chat ───────────────────────────────────────── */
 .chat-box {
     flex: 1;

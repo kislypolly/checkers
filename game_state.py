@@ -1,12 +1,21 @@
 """In-memory game session storage."""
 
+import time
 import uuid
-from game_logic import initial_board, all_jumps_for_side, all_simple_moves_for_side, apply_move, check_winner
+
+from config import Config
+from game_logic import (
+    initial_board,
+    all_jumps_for_side,
+    all_simple_moves_for_side,
+    apply_move,
+    check_winner,
+)
 
 # waiting_player: sid of player waiting for opponent
 waiting_player = None
 
-# games: { game_id: { board, turn, players: {sid: side}, chat } }
+# games: { game_id: { board, turn, players, chat, winner, last_move_timestamp, move_time_limit } }
 games = {}
 
 # sid_to_game: { sid: game_id }
@@ -25,13 +34,14 @@ def find_or_create_game(sid):
             "players": {opponent_sid: "white", sid: "black"},
             "chat": [],
             "winner": None,
+            "last_move_timestamp": time.time(),
+            "move_time_limit": Config.MOVE_TIME_LIMIT_SECONDS,
         }
         sid_to_game[opponent_sid] = game_id
         sid_to_game[sid] = game_id
         return game_id, "created"
-    else:
-        waiting_player = sid
-        return None, "waiting"
+    waiting_player = sid
+    return None, "waiting"
 
 
 def get_game(sid):
@@ -54,6 +64,22 @@ def get_valid_moves(game):
     return all_simple_moves_for_side(board, turn), False
 
 
+def reset_turn_timer(game):
+    game["last_move_timestamp"] = time.time()
+
+
+def is_time_expired(game):
+    elapsed = time.time() - game["last_move_timestamp"]
+    return elapsed > game["move_time_limit"]
+
+
+def forfeit_on_timeout(game):
+    loser = game["turn"]
+    winner = "black" if loser == "white" else "white"
+    game["winner"] = winner
+    return winner, loser
+
+
 def make_move(game, move):
     game["board"] = apply_move(game["board"], move)
     winner = check_winner(game["board"])
@@ -61,6 +87,7 @@ def make_move(game, move):
         game["winner"] = winner
     else:
         game["turn"] = "black" if game["turn"] == "white" else "white"
+        reset_turn_timer(game)
     return winner
 
 
@@ -71,7 +98,6 @@ def remove_player(sid):
     game_id, game = get_game(sid)
     if game_id:
         del sid_to_game[sid]
-        # mark opponent as disconnected if still in game
         for other_sid in list(game["players"].keys()):
             if other_sid != sid and other_sid in sid_to_game:
                 return game_id, other_sid
