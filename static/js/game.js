@@ -6,13 +6,18 @@ let board = null;
 let turn = null;
 let validMoves = [];
 let mustJump = false;
-let selectedCell = null;   // [row, col] of selected piece
-let landingMoves = [];     // valid moves from selected cell
+let selectedCell = null;
+let landingMoves = [];
+let moveTimeLimit = null;
+let lastMoveTimestamp = null;
+let serverTimeOffset = 0;
+let timerInterval = null;
 
 // ── DOM refs ──────────────────────────────────────
 const boardEl      = document.getElementById("board");
 const statusText   = document.getElementById("status-text");
 const statusBox    = document.getElementById("status-box");
+const moveTimerEl  = document.getElementById("move-timer");
 const chatMessages = document.getElementById("chat-messages");
 const chatForm     = document.getElementById("chat-form");
 const chatInput    = document.getElementById("chat-input");
@@ -21,48 +26,116 @@ const overlayText  = document.getElementById("overlay-text");
 const overlayIcon  = document.getElementById("overlay-icon");
 const dotOpponent  = document.getElementById("dot-opponent");
 
-// Piece constants (mirror server)
 const EMPTY = 0, WHITE = 1, BLACK = 2, WHITE_KING = 3, BLACK_KING = 4;
+
+// ── Timer ─────────────────────────────────────────
+function syncTimer(data) {
+    if (data.move_time_limit == null || data.last_move_timestamp == null) return;
+    moveTimeLimit = data.move_time_limit;
+    lastMoveTimestamp = data.last_move_timestamp;
+    if (data.server_time != null) {
+        serverTimeOffset = data.server_time - Date.now() / 1000;
+    }
+    startTimerLoop();
+}
+
+function serverNow() {
+    return Date.now() / 1000 + serverTimeOffset;
+}
+
+function remainingSeconds() {
+    if (moveTimeLimit == null || lastMoveTimestamp == null) return null;
+    return Math.max(0, Math.ceil(moveTimeLimit - (serverNow() - lastMoveTimestamp)));
+}
+
+function startTimerLoop() {
+    if (timerInterval) clearInterval(timerInterval);
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+        const remaining = remainingSeconds();
+        updateTimerDisplay();
+        if (remaining === 0 && turn === mySide) {
+            socket.emit("time_expired", {});
+        }
+    }, 250);
+}
+
+function updateTimerDisplay() {
+    if (!moveTimerEl) return;
+    const remaining = remainingSeconds();
+    if (remaining == null) {
+        moveTimerEl.textContent = "";
+        return;
+    }
+    moveTimerEl.textContent = `Время на ход: ${remaining} с`;
+    moveTimerEl.classList.toggle("warning", remaining <= 10);
+}
+
+function stopTimerLoop() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if (moveTimerEl) {
+        moveTimerEl.textContent = "";
+        moveTimerEl.classList.remove("warning");
+    }
+}
+
+// ── Board patches ─────────────────────────────────
+function applyBoardChanges(changes) {
+    if (!board || !changes) return;
+    for (const change of changes) {
+        board[change.row][change.col] = change.piece;
+    }
+}
 
 // ── Socket events ─────────────────────────────────
 socket.on("connect", () => {
-    console.log("connected, sid:", socket.id);
     socket.emit("join_queue", {});
 });
 
 socket.on("waiting", () => {
     setStatus("Ищем противника…", false);
+    stopTimerLoop();
 });
 
 socket.on("game_start", (data) => {
-    console.log("game_start received:", data.side, "turn:", data.turn);
     mySide = data.side;
     board  = data.board;
     turn   = data.turn;
     dotOpponent.classList.add("active");
     setStatus(turn === mySide ? "Ваш ход" : "Ход противника", turn === mySide);
+    syncTimer(data);
     updateScore();
     renderBoard();
 });
 
 socket.on("valid_moves", (data) => {
-    console.log("valid_moves received:", data.moves.length, "moves, mustJump:", data.must_jump);
     validMoves = data.moves;
     mustJump   = data.must_jump;
     renderBoard();
 });
 
 socket.on("board_update", (data) => {
-    board  = data.board;
-    turn   = data.turn;
-    selectedCell  = null;
-    landingMoves  = [];
+    if (data.board) {
+        board = data.board;
+    } else if (data.board_changes) {
+        applyBoardChanges(data.board_changes);
+    }
+    turn = data.turn;
+    selectedCell = null;
+    landingMoves = [];
+    syncTimer(data);
     updateScore();
+
     if (data.winner) {
+        stopTimerLoop();
         renderBoard();
-        showOverlay(data.winner);
+        showOverlay(data.winner, data.reason, data.time_expired_player);
         return;
     }
+
     setStatus(turn === mySide ? "Ваш ход" : "Ход противника", turn === mySide);
     renderBoard();
 });
@@ -78,6 +151,7 @@ socket.on("chat_message", (data) => {
 });
 
 socket.on("opponent_disconnected", () => {
+    stopTimerLoop();
     setStatus("Противник отключился", false);
     dotOpponent.classList.remove("active");
 });
@@ -86,7 +160,6 @@ socket.on("opponent_disconnected", () => {
 function renderBoard() {
     boardEl.innerHTML = "";
 
-    // Determine which rows to show first (flip board for black)
     const rows = mySide === "black"
         ? [7,6,5,4,3,2,1,0]
         : [0,1,2,3,4,5,6,7];
@@ -94,7 +167,6 @@ function renderBoard() {
         ? [7,6,5,4,3,2,1,0]
         : [0,1,2,3,4,5,6,7];
 
-    // Precompute sets for quick lookup
     const canMoveSet  = new Set(validMoves.map(m => key(m.from[0], m.from[1])));
     const landSet     = new Set(landingMoves.map(m => key(m.path[m.path.length-1][0], m.path[m.path.length-1][1])));
     const captureSet  = new Set();
@@ -139,7 +211,6 @@ function key(r, c) { return r * 8 + c; }
 
 // ── Interaction ───────────────────────────────────
 function onCellClick(r, c) {
-    console.log(`click [${r},${c}] turn=${turn} mySide=${mySide} selectedCell=${JSON.stringify(selectedCell)} validMoves=${validMoves.length}`);
     if (!board || turn !== mySide) return;
 
     const piece = board[r][c];
@@ -147,15 +218,12 @@ function onCellClick(r, c) {
         ? (piece === WHITE || piece === WHITE_KING)
         : (piece === BLACK || piece === BLACK_KING);
 
-    // Click on a landing cell
     if (selectedCell && landingMoves.length) {
         const move = landingMoves.find(m => {
             const last = m.path[m.path.length - 1];
             return last[0] === r && last[1] === c;
         });
-        console.log(`  landing check: found=${!!move}, landingMoves=`, JSON.stringify(landingMoves));
         if (move) {
-            console.log("  sending move:", JSON.stringify(move));
             socket.emit("make_move", { move });
             selectedCell = null;
             landingMoves = [];
@@ -163,10 +231,8 @@ function onCellClick(r, c) {
         }
     }
 
-    // Click on own piece that can move
     if (isMyPiece) {
         const movesFrom = validMoves.filter(m => m.from[0] === r && m.from[1] === c);
-        console.log(`  isMyPiece=true, movesFrom=${movesFrom.length}`);
         if (movesFrom.length) {
             selectedCell = [r, c];
             landingMoves = movesFrom;
@@ -175,7 +241,6 @@ function onCellClick(r, c) {
         }
     }
 
-    // Deselect
     selectedCell = null;
     landingMoves = [];
     renderBoard();
@@ -204,10 +269,16 @@ function appendChat(side, text) {
 }
 
 // ── Overlay ───────────────────────────────────────
-function showOverlay(winner) {
+function showOverlay(winner, reason, timeExpiredPlayer) {
     const won = winner === mySide;
     overlayIcon.textContent = won ? "🏆" : "💀";
-    overlayText.textContent = won ? "Вы победили!" : "Вы проиграли";
+    if (reason === "timeout") {
+        overlayText.textContent = timeExpiredPlayer === mySide
+            ? "Время вышло — вы проиграли"
+            : "Противник не успел сходить — вы победили";
+    } else {
+        overlayText.textContent = won ? "Вы победили!" : "Вы проиграли";
+    }
     overlay.classList.remove("hidden");
 }
 
@@ -221,10 +292,9 @@ function updateScore() {
             if (p === WHITE || p === WHITE_KING) whites++;
             if (p === BLACK || p === BLACK_KING) blacks++;
         }
-    const capturedWhite = 12 - whites; // сколько белых съедено
-    const capturedBlack = 12 - blacks; // сколько чёрных съедено
+    const capturedWhite = 12 - whites;
+    const capturedBlack = 12 - blacks;
 
-    // Обновляем счётчики шашек на карточках игроков
     const numSelf = document.getElementById("num-self");
     const numOpp  = document.getElementById("num-opponent");
     if (numSelf) numSelf.textContent = mySide === "white" ? whites : blacks;

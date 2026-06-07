@@ -177,6 +177,23 @@ def apply_move(board, move):
     return new_board
 
 
+def board_changes_from_move(move, board_after):
+    """Return only changed cells after a move for compact WebSocket updates."""
+    changes = []
+    fr, fc = move["from"]
+    tr, tc = move["path"][-1]
+    seen = set()
+
+    for row, col in [(fr, fc), (tr, tc), *move["captured"]]:
+        key = (row, col)
+        if key in seen:
+            continue
+        seen.add(key)
+        changes.append({"row": row, "col": col, "piece": board_after[row][col]})
+
+    return changes
+
+
 def check_winner(board):
     whites = sum(1 for r in range(8) for c in range(8) if is_white(board[r][c]))
     blacks = sum(1 for r in range(8) for c in range(8) if is_black(board[r][c]))
