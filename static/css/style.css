@@ -11,6 +11,7 @@
     --border:      #cbb898;
     --accent:      #7aafc9;
     --accent2:     #4a8aaa;
+    --accent-green: #5a9a6a;
     --brown-dark:  #5a3a22;
     --brown-mid:   #8a5c38;
     --text:        #5a3a22;
@@ -91,6 +92,17 @@ html, body {
     font-weight: 500;
 }
 
+.landing-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.landing-actions .btn-play {
+    width: 100%;
+}
+
 .btn-play {
     padding: 14px 56px;
     font-size: 0.88rem;
@@ -108,6 +120,16 @@ html, body {
 
 .btn-play:hover {
     background: var(--accent);
+    color: #fff;
+}
+
+.btn-play-green {
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+}
+
+.btn-play-green:hover {
+    background: var(--accent-green);
     color: #fff;
 }
 
