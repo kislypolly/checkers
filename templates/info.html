@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шашки — Информация</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .info-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            padding: 40px 20px;
+        }
+        .info-content {
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+        .info-logo {
+            text-align: center;
+        }
+        .info-logo h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            color: var(--brown-dark);
+            line-height: 1;
+        }
+        .info-logo .subtitle {
+            margin-top: 6px;
+        }
+        .info-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 28px;
+        }
+        .info-card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--brown-dark);
+            margin-bottom: 14px;
+            letter-spacing: 0.04em;
+        }
+        .info-card p {
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 0.93rem;
+        }
+        .tech-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .tech-list li {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 0.83rem;
+            color: var(--brown-mid);
+            font-weight: 500;
+        }
+        .authors-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .authors-list li {
+            font-size: 0.93rem;
+            color: var(--text);
+        }
+        .info-link {
+            color: var(--accent2);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid var(--accent);
+            transition: color 0.2s;
+        }
+        .info-link:hover {
+            color: var(--brown-mid);
+            border-color: var(--brown-mid);
+        }
+        .info-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .btn-back {
+            padding: 12px 40px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            border: 1.5px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-back:hover {
+            border-color: var(--brown-mid);
+            color: var(--brown-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="info-page">
+        <div class="info-content">
+            <div class="info-logo">
+                <div class="logo-pieces">
+                    <span class="logo-piece white"></span>
+                    <span class="logo-piece black"></span>
+                    <span class="logo-piece white"></span>
+                </div>
+                <h1>ШАШКИ</h1>
+                <p class="subtitle">Информация о проекте</p>
+            </div>
+
+            <div class="info-card">
+                <h2>О проекте</h2>
+                <p>Многопользовательская онлайн-игра в шашки с возможностью игры по сети и общением с соперником по чату.</p>
+            </div>
+
+            <div class="info-card">
+                <h2>Используемые технологии</h2>
+                <ul class="tech-list">
+                    <li>Python</li>
+                    <li>Flask</li>
+                    <li>Flask-SocketIO</li>
+                    <li>WebSockets</li>
+                    <li>HTML / CSS / JavaScript</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h2>Об игре</h2>
+                <p>«Шашки» — классическая настольная игра для двух игроков. Проект реализует базовую механику шашек, позволяя двум удалённым игрокам играть друг против друга в одной сессии.<br><br>
+                Исходный код доступен на <a class="info-link" href="https://github.com/kislypolly/checkers" target="_blank">GitHub</a>.</p>
+            </div>
+
+            <div class="info-card">
+                <h2>Авторы</h2>
+                <ul class="authors-list">
+                    <li>Киселёва Полина — Б13-403</li>
+                    <li>Торокулова Жанылай — Б13-402</li>
+                </ul>
+            </div>
+
+            <div class="info-actions">
+                <button class="btn-back" onclick="window.location.href='/'">На главную</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

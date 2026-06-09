@@ -18,6 +18,11 @@ def game():
     return render_template("game.html")
 
 
+@app.route("/info")
+def info():
+    return render_template("info.html")
+
+
 from socket_handlers import register_handlers
 register_handlers(socketio)
 
