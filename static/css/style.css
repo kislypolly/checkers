@@ -179,9 +179,44 @@ html, body {
     color: var(--brown-dark);
 }
 
+.account-email {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
 .account-trophies {
     color: var(--text-muted);
     font-size: 0.9rem;
+}
+
+.ready-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--brown-dark);
+    margin-bottom: 8px;
+}
+
+.ready-list {
+    list-style: none;
+    margin: 16px 0;
+    padding: 0;
+    text-align: left;
+}
+
+.ready-list li {
+    padding: 6px 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.ready-list li.ready-yes {
+    color: var(--accent-green);
+}
+
+#ready-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
 }
 
 .account-hint {

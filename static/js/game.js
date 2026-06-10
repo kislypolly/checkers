@@ -3,6 +3,8 @@ const socket = io();
 // ── State ─────────────────────────────────────────
 let mySide = null;
 let myUsername = null;
+let gameStarted = false;
+let iAmReady = false;
 const trophiesEl = document.getElementById("my-trophies");
 const isLoggedIn = trophiesEl !== null;
 let myTrophies = isLoggedIn ? parseInt(trophiesEl.textContent || "0", 10) : 0;
@@ -25,10 +27,15 @@ const moveTimerEl  = document.getElementById("move-timer");
 const chatMessages = document.getElementById("chat-messages");
 const chatForm     = document.getElementById("chat-form");
 const chatInput    = document.getElementById("chat-input");
-const overlay      = document.getElementById("overlay");
-const overlayText  = document.getElementById("overlay-text");
-const overlayIcon  = document.getElementById("overlay-icon");
-const dotOpponent  = document.getElementById("dot-opponent");
+const overlay        = document.getElementById("overlay");
+const overlayText    = document.getElementById("overlay-text");
+const overlayIcon    = document.getElementById("overlay-icon");
+const readyOverlay   = document.getElementById("ready-overlay");
+const readyOpponent  = document.getElementById("ready-opponent");
+const readyStatus    = document.getElementById("ready-status");
+const readyList      = document.getElementById("ready-list");
+const readyBtn       = document.getElementById("ready-btn");
+const dotOpponent    = document.getElementById("dot-opponent");
 
 const EMPTY = 0, WHITE = 1, BLACK = 2, WHITE_KING = 3, BLACK_KING = 4;
 
@@ -95,20 +102,58 @@ function applyBoardChanges(changes) {
 }
 
 // ── Socket events ─────────────────────────────────
+function resetMatchState() {
+    gameStarted = false;
+    iAmReady = false;
+    mySide = null;
+    board = null;
+    turn = null;
+    validMoves = [];
+    mustJump = false;
+    selectedCell = null;
+    landingMoves = [];
+    stopTimerLoop();
+    hideReadyOverlay();
+    if (overlay) overlay.classList.add("hidden");
+    dotOpponent.classList.remove("active");
+    boardEl.innerHTML = "";
+    chatMessages.innerHTML = "";
+    document.getElementById("label-opponent").textContent = "Противник";
+    if (readyBtn) {
+        readyBtn.disabled = false;
+        readyBtn.textContent = "Готов";
+    }
+}
+
 socket.on("connect", () => {
     socket.emit("join_queue", {});
 });
 
 socket.on("waiting", () => {
+    resetMatchState();
     setStatus("Ищем противника…", false);
-    stopTimerLoop();
+});
+
+socket.on("match_found", (data) => {
+    myUsername = data.username;
+    dotOpponent.classList.add("active");
+    document.getElementById("label-opponent").textContent = data.opponent || "Противник";
+    document.getElementById("label-self").textContent = data.username || "Вы";
+    setStatus("Подтвердите готовность", false);
+    showReadyOverlay(data.opponent);
+});
+
+socket.on("ready_update", (data) => {
+    updateReadyList(data.players);
 });
 
 socket.on("game_start", (data) => {
+    gameStarted = true;
     mySide = data.side;
     myUsername = data.username;
     board  = data.board;
     turn   = data.turn;
+    hideReadyOverlay();
     dotOpponent.classList.add("active");
     document.getElementById("label-opponent").textContent = data.opponent || "Противник";
     document.getElementById("label-self").textContent = data.username || "Вы";
@@ -168,15 +213,54 @@ socket.on("trophy_update", (data) => {
     if (el) el.textContent = myTrophies;
 });
 
-socket.on("opponent_disconnected", () => {
-    stopTimerLoop();
-    setStatus("Противник отключился", false);
-    dotOpponent.classList.remove("active");
-});
+if (readyBtn) {
+    readyBtn.addEventListener("click", () => {
+        if (iAmReady || gameStarted) return;
+        iAmReady = true;
+        readyBtn.disabled = true;
+        readyBtn.textContent = "Ожидаем…";
+        socket.emit("player_ready");
+    });
+}
 
 // ── Board rendering ───────────────────────────────
+function showReadyOverlay(opponent) {
+    if (!readyOverlay) return;
+    iAmReady = false;
+    if (readyBtn) {
+        readyBtn.disabled = false;
+        readyBtn.textContent = "Готов";
+    }
+    if (readyOpponent) readyOpponent.textContent = opponent || "Противник";
+    if (readyList) readyList.innerHTML = "";
+    readyOverlay.classList.remove("hidden");
+}
+
+function hideReadyOverlay() {
+    if (readyOverlay) readyOverlay.classList.add("hidden");
+}
+
+function updateReadyList(players) {
+    if (!readyList || !players) return;
+    readyList.innerHTML = "";
+    let allReady = true;
+    for (const p of players) {
+        const li = document.createElement("li");
+        li.textContent = `${p.name}${p.is_you ? " (вы)" : ""}: ${p.ready ? "готов" : "ожидает"}`;
+        if (p.ready) li.classList.add("ready-yes");
+        else allReady = false;
+        readyList.appendChild(li);
+    }
+    if (readyStatus) {
+        readyStatus.textContent = allReady
+            ? "Оба игрока готовы — начинаем…"
+            : "Подтвердите готовность, чтобы начать партию";
+    }
+}
+
 function renderBoard() {
     boardEl.innerHTML = "";
+    if (!board || !gameStarted) return;
 
     const rows = mySide === "black"
         ? [7,6,5,4,3,2,1,0]
@@ -229,7 +313,7 @@ function key(r, c) { return r * 8 + c; }
 
 // ── Interaction ───────────────────────────────────
 function onCellClick(r, c) {
-    if (!board || turn !== mySide) return;
+    if (!gameStarted || !board || turn !== mySide) return;
 
     const piece = board[r][c];
     const isMyPiece = mySide === "white"

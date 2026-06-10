@@ -72,6 +72,16 @@
 
     </div>
 
+    <div class="overlay hidden" id="ready-overlay">
+        <div class="overlay-box">
+            <p class="ready-title">Противник найден</p>
+            <p id="ready-opponent"></p>
+            <p id="ready-status">Подтвердите готовность, чтобы начать партию</p>
+            <ul class="ready-list" id="ready-list"></ul>
+            <button class="btn-play btn-play-green" id="ready-btn">Готов</button>
+        </div>
+    </div>
+
     <div class="overlay hidden" id="overlay">
         <div class="overlay-box">
             <div class="overlay-icon" id="overlay-icon"></div>
@@ -82,6 +92,6 @@
     </div>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="/static/js/game.js?v=4"></script>
+    <script src="/static/js/game.js?v=6"></script>
 </body>
 </html>

@@ -41,6 +41,8 @@ def find_or_create_game(sid, display_name, account_name=None):
                 opponent_sid: opponent["account_name"],
                 sid: account_name,
             },
+            "ready": {opponent_sid: False, sid: False},
+            "started": False,
             "chat": [],
             "winner": None,
             "trophy_awarded": False,
@@ -49,7 +51,7 @@ def find_or_create_game(sid, display_name, account_name=None):
         }
         sid_to_game[opponent_sid] = game_id
         sid_to_game[sid] = game_id
-        return game_id, "created"
+        return game_id, "matched", opponent_sid
     waiting_player = {
         "sid": sid,
         "display_name": display_name,
@@ -105,14 +107,45 @@ def make_move(game, move):
     return winner
 
 
+def set_player_ready(game, sid):
+    if sid not in game.get("ready", {}):
+        return False
+    game["ready"][sid] = True
+    return True
+
+
+def all_players_ready(game):
+    ready = game.get("ready", {})
+    return bool(ready) and all(ready.values())
+
+
+def start_game(game):
+    game["started"] = True
+    reset_turn_timer(game)
+
+
 def remove_player(sid):
     global waiting_player
     if waiting_player and waiting_player["sid"] == sid:
         waiting_player = None
+        return None, None
+
     game_id, game = get_game(sid)
-    if game_id:
-        del sid_to_game[sid]
-        for other_sid in list(game["players"].keys()):
-            if other_sid != sid and other_sid in sid_to_game:
-                return game_id, other_sid
+    if not game_id or not game:
+        return None, None
+
+    opponent_sid = next((s for s in game["players"] if s != sid), None)
+    del sid_to_game[sid]
+
+    if opponent_sid and opponent_sid in sid_to_game:
+        waiting_player = {
+            "sid": opponent_sid,
+            "display_name": game["usernames"][opponent_sid],
+            "account_name": game.get("accounts", {}).get(opponent_sid),
+        }
+        del sid_to_game[opponent_sid]
+        games.pop(game_id, None)
+        return game_id, opponent_sid
+
+    games.pop(game_id, None)
     return None, None

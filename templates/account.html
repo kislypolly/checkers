@@ -14,6 +14,7 @@
             {% if user %}
             <div class="account-profile">
                 <p class="account-name">{{ user.username }}</p>
+                <p class="account-email">{{ user.email }}</p>
                 <p class="account-trophies">🏆 Кубков: {{ user.trophies }}</p>
                 <p class="account-hint">Кубки сохраняются за победы</p>
             </div>
@@ -38,6 +39,7 @@
 
             <form class="auth-form hidden" id="register-form">
                 <input type="text" name="username" placeholder="Имя пользователя" autocomplete="username" required>
+                <input type="email" name="email" placeholder="Email" autocomplete="email" required>
                 <input type="password" name="password" placeholder="Пароль (мин. 4 символа)" autocomplete="new-password" required>
                 <button type="submit" class="btn-play">Зарегистрироваться</button>
             </form>

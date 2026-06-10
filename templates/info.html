@@ -49,10 +49,19 @@
             margin-bottom: 14px;
             letter-spacing: 0.04em;
         }
-        .info-card p {
+        .info-card p,
+        .info-card li {
             color: var(--text);
             line-height: 1.7;
             font-size: 0.93rem;
+        }
+        .info-card ul.feature-list {
+            list-style: disc;
+            padding-left: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 4px;
         }
         .tech-list {
             list-style: none;
@@ -130,7 +139,27 @@
 
             <div class="info-card">
                 <h2>О проекте</h2>
-                <p>Многопользовательская онлайн-игра в шашки с возможностью игры по сети и общением с соперником по чату.</p>
+                <p>Многопользовательская онлайн-игра в шашки: матчмейкинг 1 на 1, чат в реальном времени, опциональные аккаунты с кубками и email-уведомления при подключении соперника.</p>
+            </div>
+
+            <div class="info-card">
+                <h2>Авторизация</h2>
+                <ul class="feature-list">
+                    <li>Регистрация опциональна — можно играть как гость или войти через «Аккаунт».</li>
+                    <li>После входа сервер запоминает пользователя в <strong>cookie-сессии.</strong></li>
+                    <li>Пароли хранятся в виде <strong>хэша</strong> (Werkzeug), не в открытом виде.</li>
+                    <li><strong>Кубки</strong> начисляются только зарегистрированным игрокам.</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h2>Email-уведомления (SMTP)</h2>
+                <ul class="feature-list">
+                    <li>Когда соперник подключается к очереди, зарегистрированному игроку уходит письмо на email из профиля.</li>
+                    <li>Тема: «противник найден».</li>
+                    <li>Отправка по протоколу <strong>SMTP</strong> (<code>smtplib</code>).</li>
+                    <li>Шифрование соединения — <strong>STARTTLS</strong> (порт 587).</li>
+                </ul>
             </div>
 
             <div class="info-card">
@@ -140,6 +169,7 @@
                     <li>Flask</li>
                     <li>Flask-SocketIO</li>
                     <li>WebSockets</li>
+                    <li>SMTP</li>
                     <li>HTML / CSS / JavaScript</li>
                 </ul>
             </div>

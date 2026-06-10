@@ -39,7 +39,8 @@ def api_register():
     data = request.get_json(silent=True) or {}
     username = str(data.get("username", ""))
     password = str(data.get("password", ""))
-    ok, error = auth.register(username, password)
+    email = str(data.get("email", ""))
+    ok, error = auth.register(username, password, email)
     if not ok:
         return jsonify({"ok": False, "error": error}), 400
     session["username"] = username.strip()
