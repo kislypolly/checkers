@@ -1,5 +1,6 @@
 """Email notifications."""
 
+import os
 import smtplib
 import traceback
 from email.mime.text import MIMEText
@@ -23,7 +24,12 @@ def _send(to_email, subject, body):
         return False
 
     if not Config.SMTP_ENABLED:
-        print(f"[EMAIL] To: {to_email}\nSubject: {subject}\n{body}\n")
+        raw = os.environ.get("SMTP_ENABLED", "<не задано>")
+        print(
+            f"[EMAIL] SMTP выключен — письмо только в лог "
+            f"(SMTP_ENABLED={raw!r}, user={'есть' if Config.SMTP_USER else 'нет'})\n"
+            f"To: {to_email}\nSubject: {subject}\n{body}\n"
+        )
         return True
 
     return _send_smtp(to_email, subject, body)
@@ -57,9 +63,17 @@ def _send_smtp(to_email, subject, body):
     except smtplib.SMTPAuthenticationError:
         print(
             "[EMAIL ERROR] Gmail отклонил логин. "
-            "Нужен пароль приложения (не обычный пароль): "
-            "https://myaccount.google.com/apppasswords"
+            "Нужен пароль приложения: https://myaccount.google.com/apppasswords"
         )
+        return False
+    except OSError as e:
+        if getattr(e, "errno", None) == 101:
+            print(
+                "[EMAIL ERROR] SMTP недоступен (Railway блокирует порты 587/465). "
+                "Локально Gmail работает."
+            )
+        else:
+            print(f"[EMAIL ERROR] SMTP network error for {to_email}: {e}")
         return False
     except Exception:
         print(f"[EMAIL ERROR] SMTP failed for {to_email}")

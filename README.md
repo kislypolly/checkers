@@ -85,6 +85,20 @@ python3 app.py
 
 Файл `.env` подхватывается через `python-dotenv`. В `.gitignore` он исключён.
 
+### На Railway
+
+**Service → Variables** — те же 6 переменных. Без кавычек: `true`, не `"true"`.
+
+После деплоя в **логах** при старте должно быть:
+```
+[CONFIG] SMTP enabled=True, host=smtp.gmail.com, user=set
+```
+Если `enabled=False` или `user=MISSING` — переменные не подхватились (не тот сервис, опечатка в имени, нужен Redeploy).
+
+Если в логе `SMTP выключен — письмо только в лог` — на Railway не задан `SMTP_ENABLED=true` или пустые `SMTP_USER` / `SMTP_PASSWORD`.
+
+SMTP включается автоматически, если заданы и логин, и пароль (даже без `SMTP_ENABLED`).
+
 ---
 
 ## Авторы

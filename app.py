@@ -8,7 +8,12 @@ from config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)
-socketio = SocketIO(app, cors_allowed_origins=app.config["CORS_ALLOWED_ORIGINS"], async_mode="threading")
+socketio = SocketIO(
+    app,
+    cors_allowed_origins=app.config["CORS_ALLOWED_ORIGINS"],
+    async_mode="threading",
+    manage_session=False,
+)
 
 
 @app.route("/")
@@ -68,6 +73,11 @@ def api_logout():
 
 from socket_handlers import register_handlers
 register_handlers(socketio)
+
+print(
+    f"[CONFIG] SMTP enabled={Config.SMTP_ENABLED}, "
+    f"host={Config.SMTP_HOST}, user={'set' if Config.SMTP_USER else 'MISSING'}"
+)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", app.config["DEFAULT_PORT"]))

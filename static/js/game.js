@@ -1,4 +1,5 @@
-const socket = io();
+const socket = io({ withCredentials: true });
+const pageUsername = document.getElementById("my-username")?.textContent?.trim();
 
 // ── State ─────────────────────────────────────────
 let mySide = null;
@@ -135,10 +136,12 @@ socket.on("waiting", () => {
 });
 
 socket.on("match_found", (data) => {
-    myUsername = data.username;
+    myUsername = data.username?.startsWith("Гость") && pageUsername && pageUsername !== "Гость"
+        ? pageUsername
+        : data.username;
     dotOpponent.classList.add("active");
     document.getElementById("label-opponent").textContent = data.opponent || "Противник";
-    document.getElementById("label-self").textContent = data.username || "Вы";
+    document.getElementById("label-self").textContent = myUsername || "Вы";
     setStatus("Подтвердите готовность", false);
     showReadyOverlay(data.opponent);
 });
@@ -150,7 +153,9 @@ socket.on("ready_update", (data) => {
 socket.on("game_start", (data) => {
     gameStarted = true;
     mySide = data.side;
-    myUsername = data.username;
+    myUsername = data.username?.startsWith("Гость") && pageUsername && pageUsername !== "Гость"
+        ? pageUsername
+        : data.username;
     board  = data.board;
     turn   = data.turn;
     hideReadyOverlay();

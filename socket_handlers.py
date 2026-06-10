@@ -13,6 +13,16 @@ from mailer import send_opponent_joined_email
 
 def register_handlers(socketio):
 
+    def resolve_username(sid):
+        return session.get("username") or auth.get_username_for_sid(sid)
+
+    def resolve_player(sid):
+        username = resolve_username(sid)
+        if username:
+            return username, username if auth.get_user(username) else None
+        guest = f"Гость {sid[:4]}"
+        return guest, None
+
     def timer_payload(game):
         return {
             "last_move_timestamp": game["last_move_timestamp"],
@@ -128,17 +138,14 @@ def register_handlers(socketio):
 
     @socketio.on("connect")
     def on_connect():
-        username = session.get("username")
-        if username and auth.get_user(username):
+        username = resolve_username(request.sid)
+        if username:
             auth.bind_sid(request.sid, username)
 
     @socketio.on("join_queue")
     def on_join_queue(data):
         sid = request.sid
-        account = session.get("username")
-        if account and not auth.get_user(account):
-            account = None
-        display = account or f"Гость {sid[:4]}"
+        display, account = resolve_player(sid)
         result = gs.find_or_create_game(sid, display, account)
         if result[1] == "waiting":
             emit("waiting", {})
