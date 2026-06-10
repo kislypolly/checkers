@@ -18,8 +18,17 @@
                 <h1>ШАШКИ</h1>
                 <p class="subtitle">Онлайн · 1 на 1</p>
             </div>
+
+            {% if user %}
+            <div class="user-panel">
+                <p class="user-greeting">{{ user.username }}</p>
+                <p class="user-trophies">🏆 Кубков: {{ user.trophies }}</p>
+            </div>
+            {% endif %}
+
             <div class="landing-actions">
                 <button class="btn-play btn-play-green" onclick="window.location.href='/game'">Играть</button>
+                <button class="btn-play" onclick="window.location.href='/account'">Аккаунт</button>
                 <button class="btn-play" onclick="window.location.href='/info'">О проекте</button>
             </div>
             <p class="hint">Найди противника и сыграй партию в классические русские шашки</p>

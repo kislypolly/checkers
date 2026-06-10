@@ -2,9 +2,10 @@
 
 import time
 
-from flask import request
+from flask import request, session
 from flask_socketio import emit, join_room
 
+import auth
 import game_state as gs
 from game_logic import board_changes_from_move
 
@@ -32,15 +33,37 @@ def register_handlers(socketio):
                     "must_jump": False,
                 }, to=player_sid)
 
+    def award_winner_trophy(game, winner_side):
+        if game.get("trophy_awarded"):
+            return
+        game["trophy_awarded"] = True
+        for player_sid, side in game["players"].items():
+            if side != winner_side:
+                continue
+            account = game.get("accounts", {}).get(player_sid)
+            if not account:
+                continue
+            trophies = auth.add_trophy(account)
+            socketio.emit("trophy_update", {"trophies": trophies}, to=player_sid)
+
     def emit_timeout(socketio, game_id, game):
         winner, loser = gs.forfeit_on_timeout(game)
-        socketio.emit("board_update", {
+        award_winner_trophy(game, winner)
+        payload = {
             "turn": game["turn"],
             "winner": winner,
             "reason": "timeout",
             "time_expired_player": loser,
             **timer_payload(game),
-        }, room=game_id)
+        }
+        for player_sid, side in game["players"].items():
+            if side == winner:
+                account = game.get("accounts", {}).get(player_sid)
+                user = auth.get_user(account)
+                if user:
+                    payload["winner_trophies"] = user["trophies"]
+                break
+        socketio.emit("board_update", payload, room=game_id)
 
     def watch_game_timer(game_id):
         while True:
@@ -60,12 +83,18 @@ def register_handlers(socketio):
 
     @socketio.on("connect")
     def on_connect():
-        pass
+        username = session.get("username")
+        if username and auth.get_user(username):
+            auth.bind_sid(request.sid, username)
 
     @socketio.on("join_queue")
     def on_join_queue(data):
         sid = request.sid
-        game_id, status = gs.find_or_create_game(sid)
+        account = session.get("username")
+        if account and not auth.get_user(account):
+            account = None
+        display = account or f"Гость {sid[:4]}"
+        game_id, status = gs.find_or_create_game(sid, display, account)
         if status == "waiting":
             emit("waiting", {})
             return
@@ -73,8 +102,11 @@ def register_handlers(socketio):
         game = gs.games[game_id]
         for player_sid, side in game["players"].items():
             join_room(game_id, sid=player_sid)
+            opponent_sid = next(s for s in game["players"] if s != player_sid)
             socketio.emit("game_start", {
                 "side": side,
+                "username": game["usernames"][player_sid],
+                "opponent": game["usernames"][opponent_sid],
                 "board": game["board"],
                 "turn": game["turn"],
                 **timer_payload(game),
@@ -117,6 +149,15 @@ def register_handlers(socketio):
             "winner": winner,
             **timer_payload(game),
         }
+        if winner:
+            award_winner_trophy(game, winner)
+            for player_sid, side in game["players"].items():
+                if side == winner:
+                    account = game.get("accounts", {}).get(player_sid)
+                    user = auth.get_user(account)
+                    if user:
+                        payload["winner_trophies"] = user["trophies"]
+                    break
         socketio.emit("board_update", payload, room=game_id)
 
         if not winner:
@@ -146,6 +187,7 @@ def register_handlers(socketio):
     @socketio.on("disconnect")
     def on_disconnect():
         sid = request.sid
+        auth.unbind_sid(sid)
         game_id, opponent_sid = gs.remove_player(sid)
         if game_id and opponent_sid:
             socketio.emit("opponent_disconnected", {}, to=opponent_sid)

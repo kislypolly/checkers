@@ -12,35 +12,49 @@ from game_logic import (
     check_winner,
 )
 
-# waiting_player: sid of player waiting for opponent
+# waiting_player: { sid, display_name, account_name } or None
 waiting_player = None
 
-# games: { game_id: { board, turn, players, chat, winner, last_move_timestamp, move_time_limit } }
+# games: { game_id: { board, turn, players, usernames, accounts, chat, ... } }
 games = {}
 
 # sid_to_game: { sid: game_id }
 sid_to_game = {}
 
 
-def find_or_create_game(sid):
+def find_or_create_game(sid, display_name, account_name=None):
     global waiting_player
-    if waiting_player and waiting_player != sid:
-        opponent_sid = waiting_player
+    if waiting_player and waiting_player["sid"] != sid:
+        opponent = waiting_player
         waiting_player = None
+        opponent_sid = opponent["sid"]
         game_id = str(uuid.uuid4())
         games[game_id] = {
             "board": initial_board(),
             "turn": "white",
             "players": {opponent_sid: "white", sid: "black"},
+            "usernames": {
+                opponent_sid: opponent["display_name"],
+                sid: display_name,
+            },
+            "accounts": {
+                opponent_sid: opponent["account_name"],
+                sid: account_name,
+            },
             "chat": [],
             "winner": None,
+            "trophy_awarded": False,
             "last_move_timestamp": time.time(),
             "move_time_limit": Config.MOVE_TIME_LIMIT_SECONDS,
         }
         sid_to_game[opponent_sid] = game_id
         sid_to_game[sid] = game_id
         return game_id, "created"
-    waiting_player = sid
+    waiting_player = {
+        "sid": sid,
+        "display_name": display_name,
+        "account_name": account_name,
+    }
     return None, "waiting"
 
 
@@ -93,7 +107,7 @@ def make_move(game, move):
 
 def remove_player(sid):
     global waiting_player
-    if waiting_player == sid:
+    if waiting_player and waiting_player["sid"] == sid:
         waiting_player = None
     game_id, game = get_game(sid)
     if game_id:

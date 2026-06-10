@@ -140,6 +140,198 @@ html, body {
     line-height: 1.7;
 }
 
+.account-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--bg);
+}
+
+.account-card {
+    width: min(360px, 100%);
+    padding: 28px 24px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.account-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brown-dark);
+    text-align: center;
+}
+
+.account-profile {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.account-name {
+    font-weight: 600;
+    color: var(--brown-dark);
+}
+
+.account-trophies {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.account-hint {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.account-actions .btn-play {
+    width: 100%;
+}
+
+.account-card .auth-tabs,
+.account-card .auth-form {
+    width: 100%;
+}
+
+.auth-box {
+    width: min(320px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.auth-tabs {
+    display: flex;
+    gap: 8px;
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.auth-tab.active {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.auth-form input {
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.auth-form .btn-play {
+    width: 100%;
+}
+
+.auth-error {
+    color: #b4321e;
+    font-size: 0.85rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.user-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.user-greeting {
+    font-weight: 600;
+    color: var(--brown-dark);
+    letter-spacing: 0.05em;
+}
+
+.user-trophies {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.btn-play-muted {
+    border-color: var(--border);
+    color: var(--text-muted);
+}
+
+.btn-play-muted:hover {
+    background: var(--surface2);
+    color: var(--brown-dark);
+}
+
+.sidebar-user {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.sidebar-user span:first-child {
+    font-weight: 600;
+    color: var(--brown-dark);
+}
+
+.sidebar-trophies {
+    font-size: 0.8rem;
+}
+
+.sidebar-guest {
+    color: var(--text-muted);
+}
+
+.sidebar-account-link {
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.sidebar-account-link:hover {
+    color: var(--accent2);
+}
+
 /* ── Game Layout ────────────────────────────────── */
 .game-layout {
     min-height: 100vh;

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аккаунт — Шашки</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="account-page">
+        <div class="account-card">
+            <h2 class="account-title">Аккаунт</h2>
+
+            {% if user %}
+            <div class="account-profile">
+                <p class="account-name">{{ user.username }}</p>
+                <p class="account-trophies">🏆 Кубков: {{ user.trophies }}</p>
+                <p class="account-hint">Кубки сохраняются за победы</p>
+            </div>
+            <div class="account-actions">
+                <button class="btn-play btn-play-green" onclick="window.location.href='/game'">Играть</button>
+                <button class="btn-play btn-play-muted" id="logout-btn">Выйти</button>
+                <button class="btn-play" onclick="window.location.href='/'">На главную</button>
+            </div>
+            {% else %}
+            <p class="account-hint">Регистрация необязательна — можно играть как гость</p>
+
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab active" data-tab="login">Вход</button>
+                <button type="button" class="auth-tab" data-tab="register">Регистрация</button>
+            </div>
+
+            <form class="auth-form" id="login-form">
+                <input type="text" name="username" placeholder="Имя пользователя" autocomplete="username" required>
+                <input type="password" name="password" placeholder="Пароль" autocomplete="current-password" required>
+                <button type="submit" class="btn-play btn-play-green">Войти</button>
+            </form>
+
+            <form class="auth-form hidden" id="register-form">
+                <input type="text" name="username" placeholder="Имя пользователя" autocomplete="username" required>
+                <input type="password" name="password" placeholder="Пароль (мин. 4 символа)" autocomplete="new-password" required>
+                <button type="submit" class="btn-play">Зарегистрироваться</button>
+            </form>
+
+            <p class="auth-error hidden" id="auth-error"></p>
+
+            <div class="account-actions">
+                <button class="btn-play" onclick="window.location.href='/'">На главную</button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <script src="/static/js/auth.js"></script>
+</body>
+</html>

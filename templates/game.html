@@ -11,6 +11,17 @@
 
         <!-- Левая панель: инфо + чат -->
         <aside class="sidebar">
+            {% if user %}
+            <div class="sidebar-user">
+                <span id="my-username">{{ user.username }}</span>
+                <span class="sidebar-trophies">🏆 <span id="my-trophies">{{ user.trophies }}</span></span>
+            </div>
+            {% else %}
+            <div class="sidebar-user sidebar-guest">
+                <span id="my-username">Гость</span>
+                <a class="sidebar-account-link" href="/account">Войти</a>
+            </div>
+            {% endif %}
             <div class="player-card" id="card-opponent">
                 <div class="player-dot" id="dot-opponent"></div>
                 <span id="label-opponent">Противник</span>
@@ -71,6 +82,6 @@
     </div>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="/static/js/game.js?v=3"></script>
+    <script src="/static/js/game.js?v=4"></script>
 </body>
 </html>

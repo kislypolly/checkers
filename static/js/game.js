@@ -2,6 +2,10 @@ const socket = io();
 
 // ── State ─────────────────────────────────────────
 let mySide = null;
+let myUsername = null;
+const trophiesEl = document.getElementById("my-trophies");
+const isLoggedIn = trophiesEl !== null;
+let myTrophies = isLoggedIn ? parseInt(trophiesEl.textContent || "0", 10) : 0;
 let board = null;
 let turn = null;
 let validMoves = [];
@@ -102,9 +106,12 @@ socket.on("waiting", () => {
 
 socket.on("game_start", (data) => {
     mySide = data.side;
+    myUsername = data.username;
     board  = data.board;
     turn   = data.turn;
     dotOpponent.classList.add("active");
+    document.getElementById("label-opponent").textContent = data.opponent || "Противник";
+    document.getElementById("label-self").textContent = data.username || "Вы";
     setStatus(turn === mySide ? "Ваш ход" : "Ход противника", turn === mySide);
     syncTimer(data);
     updateScore();
@@ -130,6 +137,11 @@ socket.on("board_update", (data) => {
     updateScore();
 
     if (data.winner) {
+        if (data.winner === mySide && data.winner_trophies != null) {
+            myTrophies = data.winner_trophies;
+            const el = document.getElementById("my-trophies");
+            if (el) el.textContent = myTrophies;
+        }
         stopTimerLoop();
         renderBoard();
         showOverlay(data.winner, data.reason, data.time_expired_player);
@@ -148,6 +160,12 @@ socket.on("invalid_move", () => {
 
 socket.on("chat_message", (data) => {
     appendChat(data.side, data.text);
+});
+
+socket.on("trophy_update", (data) => {
+    myTrophies = data.trophies;
+    const el = document.getElementById("my-trophies");
+    if (el) el.textContent = myTrophies;
 });
 
 socket.on("opponent_disconnected", () => {
@@ -272,13 +290,18 @@ function appendChat(side, text) {
 function showOverlay(winner, reason, timeExpiredPlayer) {
     const won = winner === mySide;
     overlayIcon.textContent = won ? "🏆" : "💀";
+    let text;
     if (reason === "timeout") {
-        overlayText.textContent = timeExpiredPlayer === mySide
+        text = timeExpiredPlayer === mySide
             ? "Время вышло — вы проиграли"
             : "Противник не успел сходить — вы победили";
     } else {
-        overlayText.textContent = won ? "Вы победили!" : "Вы проиграли";
+        text = won ? "Вы победили!" : "Вы проиграли";
     }
+    if (won && isLoggedIn) {
+        text += `\nКубков: ${myTrophies}`;
+    }
+    overlayText.textContent = text;
     overlay.classList.remove("hidden");
 }
 
